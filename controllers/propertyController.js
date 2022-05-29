@@ -1,10 +1,10 @@
 //Property Model Object from propertyModel file
 const { findByIdAndUpdate } = require('../models/userModel');
 const User = require('../models/userModel');
+const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const Property = require('./../models/propertyModel');
-
 //Create Property
 
 // exports.createProperty = catchAsync(async (req, res) => {
@@ -17,6 +17,20 @@ const Property = require('./../models/propertyModel');
 //     },
 //   });
 // });
+exports.aliasLatestBuy = (req, res, next) => {
+  req.query.limit = '2';
+  req.query.sort = '-createdAt,-price';
+  // req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  req.query.propertyFor = 'buy';
+  next();
+};
+exports.aliasLatestRent = (req, res, next) => {
+  req.query.limit = '2';
+  req.query.sort = '-createdAt,-price';
+  // req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+  req.query.propertyFor = 'rent';
+  next();
+};
 
 exports.createProperty = catchAsync(async (req, res) => {
   // console.log(req.body);
@@ -40,6 +54,52 @@ exports.createProperty = catchAsync(async (req, res) => {
   });
 });
 
+// Search Property
+exports.searchProperty = catchAsync(async (req, res) => {
+  const key = req.params.key;
+  // const property = await Property.find({
+  //   $or: [
+  //     { title: { $regex: key } },
+  //     { description: { $regex: key } },
+  //     { detailedAddress: { $regex: key } },
+  //     { propertyType: { $regex: key } },
+  //   ],
+  // });
+
+  var features;
+  if (key === 'all') {
+    features = new APIFeatures(Property.find({}), req.query)
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+  } else {
+    features = new APIFeatures(
+      Property.find({
+        $or: [
+          { title: { $regex: key } },
+          { description: { $regex: key } },
+          { detailedAddress: { $regex: key } },
+          { propertyType: { $regex: key } },
+        ],
+      }),
+      req.query
+    )
+      .filter()
+      .sort()
+      .limitFields()
+      .paginate();
+  }
+  const property = await features.query;
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      property,
+    },
+  });
+});
+
 // Get property by id
 exports.getProperty = catchAsync(async (req, res) => {
   const property = await Property.findById(req.params.id); // find property in database by id
@@ -54,7 +114,15 @@ exports.getProperty = catchAsync(async (req, res) => {
 
 // Get All Properties
 exports.getAllProperty = catchAsync(async (req, res) => {
-  const property = await Property.find({}); // find all properties from database
+  // const property = await Property.find({}); // find all properties from database
+
+  const features = new APIFeatures(Property.find(), req.query)
+    .filter()
+    .sort()
+    .limitFields()
+    .paginate();
+
+  const property = await features.query;
 
   res.status(201).json({
     status: 'success',
