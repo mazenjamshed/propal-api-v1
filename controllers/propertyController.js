@@ -146,6 +146,24 @@ exports.updateProperty = catchAsync(async (req, res) => {
   });
 });
 
+//Approve Property by Id
+exports.approveProperty = catchAsync(async (req, res) => {
+  const property = await Property.findByIdAndUpdate(
+    req.params.id,
+    { isApproved: true },
+    {
+      new: true,
+    }
+  );
+
+  res.status(201).json({
+    status: 'success',
+    data: {
+      property,
+    },
+  });
+});
+
 // Delete property by Id
 exports.deleteProperty = catchAsync(async (req, res) => {
   const property = await Property.findByIdAndDelete(req.params.id, {

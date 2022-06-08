@@ -10,6 +10,7 @@ const {
   aliasLatestBuy,
   aliasLatestRent,
   searchProperty,
+  approveProperty,
 } = require('./../controllers/propertyController.js');
 
 const router = express.Router(); // Initialize the Router
@@ -20,6 +21,8 @@ router.route('/latest-property-buy').get(aliasLatestBuy, getAllProperty);
 router.route('/latest-property-rent').get(aliasLatestRent, getAllProperty);
 
 router.route('/:userId').post(authController.protect, createProperty);
+
+router.route('/approve/:id').patch(approveProperty);
 
 router.route('/unApprovedProperties').get(unApprovedProperties);
 router
