@@ -5,6 +5,8 @@ const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const Property = require('./../models/propertyModel');
+const multer = require('multer');
+const sharp = require('sharp');
 //Create Property
 
 // exports.createProperty = catchAsync(async (req, res) => {
@@ -17,6 +19,62 @@ const Property = require('./../models/propertyModel');
 //     },
 //   });
 // });
+
+const multerStorage = multer.memoryStorage();
+
+const multerFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image')) {
+    cb(null, true);
+  } else {
+    cb(new AppError('Not an image! Please upload only images.', 400), false);
+  }
+};
+
+const upload = multer({
+  storage: multerStorage,
+  fileFilter: multerFilter,
+});
+
+exports.uploadPropertyImages = upload.fields([
+  { name: 'coverImage', maxCount: 1 },
+  { name: 'images', maxCount: 6 },
+]);
+
+exports.resizePropertyImages = catchAsync(async (req, res, next) => {
+  if (!req.files.coverImage || !req.files.images) return next();
+
+  // 1) Cover image
+  req.body.coverImage = `property-${
+    req.params.userId
+  }-${Date.now()}-cover.jpeg`;
+  await sharp(req.files.coverImage[0].buffer)
+    .resize(2000, 1333)
+    .toFormat('jpeg')
+    .jpeg({ quality: 90 })
+    .toFile(`public/img/properties/${req.body.coverImage}`);
+
+  // 2) Images
+  req.body.images = [];
+
+  await Promise.all(
+    req.files.images.map(async (file, i) => {
+      const filename = `property-${req.params.userId}-${Date.now()}-${
+        i + 1
+      }.jpeg`;
+
+      await sharp(file.buffer)
+        .resize(2000, 1333)
+        .toFormat('jpeg')
+        .jpeg({ quality: 90 })
+        .toFile(`public/img/properties/${filename}`);
+
+      req.body.images.push(filename);
+    })
+  );
+
+  next();
+});
+//!==========Property Image Uploads
 exports.aliasLatestBuy = (req, res, next) => {
   req.query.limit = '2';
   req.query.sort = '-createdAt,-price';
@@ -133,6 +191,7 @@ exports.getAllProperty = catchAsync(async (req, res) => {
 });
 
 //Update Property by Id
+
 exports.updateProperty = catchAsync(async (req, res) => {
   const property = await Property.findByIdAndUpdate(req.params.id, req.body, {
     new: true,

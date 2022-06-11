@@ -11,6 +11,8 @@ const {
   aliasLatestRent,
   searchProperty,
   approveProperty,
+  uploadPropertyImages,
+  resizePropertyImages,
 } = require('./../controllers/propertyController.js');
 
 const router = express.Router(); // Initialize the Router
@@ -20,7 +22,14 @@ router.route('/search/:key').get(searchProperty); // for localhost/property/sear
 router.route('/latest-property-buy').get(aliasLatestBuy, getAllProperty);
 router.route('/latest-property-rent').get(aliasLatestRent, getAllProperty);
 
-router.route('/:userId').post(authController.protect, createProperty);
+router
+  .route('/:userId')
+  .post(
+    authController.protect,
+    uploadPropertyImages,
+    resizePropertyImages,
+    createProperty
+  );
 
 router.route('/approve/:id').patch(approveProperty);
 

@@ -5,8 +5,11 @@ const propertyRouter = require('./routes/propertyRouter');
 const adminRouter = require('./routes/adminRouter');
 const globalErrorHandler = require('./controllers/errorController');
 const AppError = require('./utils/appError');
+const path = require('path');
 
 const app = express();
+// app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 app.use(cors());
 
 app.use(express.json());

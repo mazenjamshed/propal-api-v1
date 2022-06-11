@@ -41,6 +41,7 @@ const propertySchema = new Schema({
     type: String, // Change these to the actual location coordinates
     required: [true, 'address is required'],
   },
+  coverImage: String,
   images: [String],
   postedBy: { type: Schema.Types.ObjectId, ref: 'User' },
 });
